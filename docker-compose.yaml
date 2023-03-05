@@ -1,0 +1,50 @@
+version: "3"
+# version = docker compose version i am running.
+
+services:
+  db:
+    image: postgres:13-alpine
+    container_name: dp
+    ports:
+      - 5981:5432
+    networks:
+      - dp-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # named volumes.
+    environment:
+      POSTGRES_PASSWORD: 123456789
+      POSTGRES_USER: postgres
+      POSTGRES_DB: django_docker_db
+
+# VERY IMPORTANT
+# do not give image: python:3.8-slim-buster in dd-container: because it is using build: .
+# otherwise unknown error occurs.
+
+  dd-container:
+    container_name: dd-container
+    build: .
+    restart: always
+    working_dir: /app  # implemented for below "bind mounts" command. It sets the “working directory” or the current directory that the command will run from.
+    volumes:
+      - ./:/app   # bind mounts. To sync data b/w host and container, /app is also used in Dockerfile.
+    ports:
+      - 8000:8000  # this is also used in Dockerfile
+    networks:
+      - dp-network
+    depends_on:
+      - db    # Note: depends_on will not wait for db to be “ready” before starting dd-container - only until they have been started. If you need to wait for a service to be ready, see Controlling startup order for more on this problem and strategies for solving it.
+
+# To use restart policies, Docker provides the following options:
+# no: Containers won't restart automatically.
+# on-failure[:max-retries]: Restart the container if it exits with a non-zero exit code, and provide a maximum number of attempts for the Docker daemon to restart the container.
+# always: Always restart the container if it stops.
+# unless-stopped: Always restart the container unless it was stopped arbitrarily, or by the Docker daemon.
+
+
+volumes:
+  postgres_data:
+
+networks:
+  dp-network:
+    name: dp-network    # custom name for network. (see: https://docs.docker.com/compose/networking/)
+    driver: bridge
