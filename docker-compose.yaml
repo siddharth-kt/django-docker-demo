@@ -1,5 +1,6 @@
 version: "3"
 # version = docker compose version i am running.
+# compatibility matrix = https://docs.docker.com/compose/compose-file/compose-versioning/#compatibility-matrix
 
 services:
   db:
